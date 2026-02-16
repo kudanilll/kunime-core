@@ -9,6 +9,7 @@ import (
 type Config struct {
 	AppPort string
 	Env     string
+	APIKey  string
 }
 
 var cfg *Config
@@ -19,6 +20,7 @@ func Load() (*Config, error) {
 	cfg = &Config{
 		AppPort: getEnv("APP_PORT", "8080"),
 		Env:     getEnv("APP_ENV", "development"),
+		APIKey:  getEnv("API_KEY", ""),
 	}
 
 	return cfg, nil
@@ -36,4 +38,11 @@ func getEnv(key, fallback string) string {
 		return val
 	}
 	return fallback
+}
+
+func APIKey() string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.APIKey
 }
