@@ -1,18 +1,24 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 
+	firebase "firebase.google.com/go"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 
 	"github.com/kudanilll/kunime-core/internal/config"
+	firestoreInfra "github.com/kudanilll/kunime-core/internal/infra/firestore"
 	httpTransport "github.com/kudanilll/kunime-core/internal/transport/http"
+	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
+	"github.com/kudanilll/kunime-core/internal/usecase/watch"
 )
 
 type App struct {
-	Fiber  *fiber.App
-	Logger *zap.Logger
+	Fiber     *fiber.App
+	Logger    *zap.Logger
+	Firestore *firebase.App
 }
 
 func NewApp() (*App, error) {
@@ -26,24 +32,42 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
+	ctx := context.Background()
+
+	// Firebase init
+	fbApp, err := firebase.NewApp(ctx, nil)
+	if err != nil {
+		logger.Fatal("failed to initialize firebase app", zap.Error(err))
+		return nil, err
+	}
+
+	firestoreClient, err := firestoreInfra.NewClient(ctx, fbApp)
+	if err != nil {
+		return nil, err
+	}
+
+	watchRepo := firestoreInfra.NewWatchRepository(firestoreClient)
+	watchUC := watch.NewRecordWatchUsecase(watchRepo)
+	watchHandler := handler.NewWatchHandler(watchUC)
+
+	handlers := &httpTransport.Handlers{
+		Watch: watchHandler,
+	}
+
+	// Fiber init
 	app := fiber.New(fiber.Config{
 		AppName: "kunime-core",
 	})
 
-	httpTransport.RegisterRoutes(app)
-
-	// health check
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status": "ok",
-		})
-	})
+	// register routes
+	httpTransport.RegisterRoutes(app, handlers)
 
 	logger.Info("application initialized")
 
 	return &App{
-		Fiber:  app,
-		Logger: logger,
+		Fiber:     app,
+		Logger:    logger,
+		Firestore: fbApp,
 	}, nil
 }
 

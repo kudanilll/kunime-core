@@ -3,10 +3,15 @@ package http
 import (
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
 	"github.com/kudanilll/kunime-core/internal/transport/http/middleware"
 )
 
-func RegisterRoutes(app *fiber.App) {
+type Handlers struct {
+	Watch *handler.WatchHandler
+}
+
+func RegisterRoutes(app *fiber.App, h *Handlers) {
 	// Public routes
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
@@ -17,11 +22,7 @@ func RegisterRoutes(app *fiber.App) {
 	// Protected API routes
 	api := app.Group("/api/v1", middleware.APIKey())
 
-	api.Post("/events/watch", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "watch event endpoint (not implemented yet)",
-		})
-	})
+	api.Post("/events/watch", h.Watch.Record)
 
 	api.Get("/anime/popular", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
