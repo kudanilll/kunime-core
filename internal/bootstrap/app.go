@@ -47,7 +47,9 @@ func NewApp() (*App, error) {
 	}
 
 	watchRepo := firestoreInfra.NewWatchRepository(firestoreClient)
-	watchUC := watch.NewRecordWatchUsecase(watchRepo)
+	popularRepo := firestoreInfra.NewPopularRepository(firestoreClient)
+
+	watchUC := watch.NewRecordWatchUsecase(watchRepo, popularRepo)
 	watchHandler := handler.NewWatchHandler(watchUC)
 
 	handlers := &httpTransport.Handlers{
@@ -59,7 +61,7 @@ func NewApp() (*App, error) {
 		AppName: "kunime-core",
 	})
 
-	// register routes
+	// Register routes
 	httpTransport.RegisterRoutes(app, handlers)
 
 	logger.Info("application initialized")

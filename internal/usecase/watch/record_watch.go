@@ -8,16 +8,27 @@ import (
 	"github.com/kudanilll/kunime-core/internal/domain"
 )
 
-type Repository interface {
+type WatchRepository interface {
 	Save(ctx context.Context, event *domain.WatchEvent) error
 }
 
-type RecordWatchUsecase struct {
-	repo Repository
+type PopularRepository interface {
+	Increment(ctx context.Context, animeID string) error
 }
 
-func NewRecordWatchUsecase(repo Repository) *RecordWatchUsecase {
-	return &RecordWatchUsecase{repo: repo}
+type RecordWatchUsecase struct {
+	watchRepo   WatchRepository
+	popularRepo PopularRepository
+}
+
+func NewRecordWatchUsecase(
+	watchRepo WatchRepository,
+	popularRepo PopularRepository,
+) *RecordWatchUsecase {
+	return &RecordWatchUsecase{
+		watchRepo:   watchRepo,
+		popularRepo: popularRepo,
+	}
 }
 
 func (u *RecordWatchUsecase) Execute(
@@ -43,8 +54,18 @@ func (u *RecordWatchUsecase) Execute(
 		Episode:   episode,
 		DeviceID:  deviceID,
 		WatchedAt: now,
-		ExpiresAt: now.Add(14 * 24 * time.Hour), // TTL 14 hari
+		ExpiresAt: now.Add(14 * 24 * time.Hour),
 	}
 
-	return u.repo.Save(ctx, event)
+	// Save watch event
+	if err := u.watchRepo.Save(ctx, event); err != nil {
+		return err
+	}
+
+	// Update popular count
+	if err := u.popularRepo.Increment(ctx, animeID); err != nil {
+		return err
+	}
+
+	return nil
 }
