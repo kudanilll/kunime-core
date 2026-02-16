@@ -6,10 +6,12 @@ import (
 
 	firebase "firebase.google.com/go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 
 	"github.com/kudanilll/kunime-core/internal/config"
 	firestoreInfra "github.com/kudanilll/kunime-core/internal/infra/firestore"
+	"github.com/kudanilll/kunime-core/internal/job"
 	httpTransport "github.com/kudanilll/kunime-core/internal/transport/http"
 	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
 	"github.com/kudanilll/kunime-core/internal/usecase/popular"
@@ -67,6 +69,17 @@ func NewApp() (*App, error) {
 
 	// Register routes
 	httpTransport.RegisterRoutes(app, handlers)
+
+	// Cron job init
+	c := cron.New()
+	cleanupJob := job.NewCleanupWatchEventJob(firestoreClient, logger)
+	c.AddFunc("@every 1h", func() {
+		ctx := context.Background()
+		if err := cleanupJob.Run(ctx); err != nil {
+			logger.Error("cleanup job failed", zap.Error(err))
+		}
+	})
+	c.Start()
 
 	logger.Info("application initialized")
 
