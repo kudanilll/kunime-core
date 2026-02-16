@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kudanilll/kunime-core/internal/config"
+	httpTransport "github.com/kudanilll/kunime-core/internal/transport/http"
 )
 
 type App struct {
@@ -28,6 +29,8 @@ func NewApp() (*App, error) {
 	app := fiber.New(fiber.Config{
 		AppName: "kunime-core",
 	})
+
+	httpTransport.RegisterRoutes(app)
 
 	// health check
 	app.Get("/health", func(c *fiber.Ctx) error {
