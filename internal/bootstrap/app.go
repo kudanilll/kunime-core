@@ -12,6 +12,7 @@ import (
 	firestoreInfra "github.com/kudanilll/kunime-core/internal/infra/firestore"
 	httpTransport "github.com/kudanilll/kunime-core/internal/transport/http"
 	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
+	"github.com/kudanilll/kunime-core/internal/usecase/popular"
 	"github.com/kudanilll/kunime-core/internal/usecase/watch"
 )
 
@@ -46,14 +47,17 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
-	watchRepo := firestoreInfra.NewWatchRepository(firestoreClient)
 	popularRepo := firestoreInfra.NewPopularRepository(firestoreClient)
+	popularUC := popular.NewGetPopularUsecase(popularRepo)
+	popularHandler := handler.NewPopularHandler(popularUC)
 
+	watchRepo := firestoreInfra.NewWatchRepository(firestoreClient)
 	watchUC := watch.NewRecordWatchUsecase(watchRepo, popularRepo)
 	watchHandler := handler.NewWatchHandler(watchUC)
 
 	handlers := &httpTransport.Handlers{
-		Watch: watchHandler,
+		Watch:   watchHandler,
+		Popular: popularHandler,
 	}
 
 	// Fiber init
