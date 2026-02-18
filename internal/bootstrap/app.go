@@ -89,8 +89,9 @@ func NewApp() (*App, error) {
 	recHandler := handler.NewRecommendationHandler(recReadUC)
 
 	appRepo := firestoreInfra.NewAppRepository(firestoreClient)
-	appUC := appUsecase.NewGetVersionUsecase(appRepo)
-	appHandler := handler.NewAppHandler(appUC)
+	appGetUC := appUsecase.NewGetVersionUsecase(appRepo)
+	appUpdateUC := appUsecase.NewUpdateVersionUsecase(appRepo)
+	appHandler := handler.NewAppHandler(appGetUC, appUpdateUC)
 
 	handlers := &httpTransport.Handlers{
 		Watch:          watchHandler,

@@ -32,3 +32,15 @@ func (r *AppRepository) GetVersion(ctx context.Context) (*domain.AppVersion, err
 
 	return &result, nil
 }
+
+func (r *AppRepository) UpdateVersion(
+	ctx context.Context,
+	data *domain.AppVersion,
+) error {
+	_, err := r.client.
+		Collection("app_config").
+		Doc("mobile").
+		Set(ctx, data)
+
+	return err
+}

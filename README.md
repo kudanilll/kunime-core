@@ -72,7 +72,8 @@ kunime-core/
 │   │   ├── genre/
 │   │   │   └── get_genres.go
 │   │   └── app/
-│   │       └── get_version.go
+│   │       ├── get_version.go
+│   │       └── update_version.go
 │   └── util/
 │       ├── time.go
 │       └── response.go

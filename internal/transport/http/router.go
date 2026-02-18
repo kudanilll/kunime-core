@@ -41,5 +41,6 @@ func RegisterRoutes(app *fiber.App, h *Handlers) {
 		})
 	})
 
+	api.Post("/app/version", h.App.UpdateVersion)
 	api.Get("/app/version", h.App.GetVersion)
 }
