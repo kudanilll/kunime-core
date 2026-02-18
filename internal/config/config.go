@@ -9,7 +9,8 @@ import (
 type Config struct {
 	AppPort          string
 	Env              string
-	APIKey           string
+	ClientAPIKey     string
+	AdminAPIKey      string
 	KunimeAPIBaseURL string
 	KunimeAPIKey     string
 }
@@ -22,7 +23,8 @@ func Load() (*Config, error) {
 	cfg = &Config{
 		AppPort:          getEnv("APP_PORT", "8080"),
 		Env:              getEnv("APP_ENV", "development"),
-		APIKey:           getEnv("API_KEY", ""),
+		ClientAPIKey:     getEnv("CLIENT_API_KEY", ""),
+		AdminAPIKey:      getEnv("ADMIN_API_KEY", ""),
 		KunimeAPIBaseURL: getEnv("KUNIME_API_BASE_URL", ""),
 		KunimeAPIKey:     getEnv("KUNIME_API_KEY", ""),
 	}
@@ -44,9 +46,16 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-func APIKey() string {
+func ClientAPIKey() string {
 	if cfg == nil {
 		return ""
 	}
-	return cfg.APIKey
+	return cfg.ClientAPIKey
+}
+
+func AdminAPIKey() string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.AdminAPIKey
 }

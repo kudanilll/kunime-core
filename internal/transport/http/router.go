@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/kudanilll/kunime-core/internal/config"
 
 	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
 	"github.com/kudanilll/kunime-core/internal/transport/http/middleware"
@@ -15,32 +16,31 @@ type Handlers struct {
 }
 
 func RegisterRoutes(app *fiber.App, h *Handlers) {
-	// Public routes
+	// Health
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status": "ok",
-		})
+		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
-	// Protected API routes
-	api := app.Group("/api/v1", middleware.APIKey())
+	// Admin routes
+	admin := app.Group("/api/v1/admin",
+		middleware.RequireAPIKey(config.AdminAPIKey),
+	)
+
+	admin.Post("/app/version", h.App.UpdateVersion)
+
+	// Client routes
+	api := app.Group("/api/v1",
+		middleware.RequireAPIKey(config.ClientAPIKey),
+	)
 
 	api.Post("/events/watch", h.Watch.Record)
 	api.Get("/anime/popular", h.Popular.Get)
 	api.Get("/recommendations", h.Recommendation.Get)
-
 	api.Get("/banners", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "banner endpoint (not implemented yet)",
-		})
+		return c.JSON(fiber.Map{"message": "banner endpoint (not implemented yet)"})
 	})
-
 	api.Get("/genres", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "genre endpoint (not implemented yet)",
-		})
+		return c.JSON(fiber.Map{"message": "genre endpoint (not implemented yet)"})
 	})
-
-	api.Post("/app/version", h.App.UpdateVersion)
 	api.Get("/app/version", h.App.GetVersion)
 }
