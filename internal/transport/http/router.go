@@ -11,6 +11,7 @@ type Handlers struct {
 	Watch          *handler.WatchHandler
 	Popular        *handler.PopularHandler
 	Recommendation *handler.RecommendationHandler
+	App            *handler.AppHandler
 }
 
 func RegisterRoutes(app *fiber.App, h *Handlers) {
@@ -40,9 +41,5 @@ func RegisterRoutes(app *fiber.App, h *Handlers) {
 		})
 	})
 
-	api.Get("/app/version", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "app version endpoint (not implemented yet)",
-		})
-	})
+	api.Get("/app/version", h.App.GetVersion)
 }

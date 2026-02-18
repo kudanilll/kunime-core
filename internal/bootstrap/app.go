@@ -15,6 +15,7 @@ import (
 	"github.com/kudanilll/kunime-core/internal/job"
 	httpTransport "github.com/kudanilll/kunime-core/internal/transport/http"
 	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
+	appUsecase "github.com/kudanilll/kunime-core/internal/usecase/app"
 	"github.com/kudanilll/kunime-core/internal/usecase/popular"
 	"github.com/kudanilll/kunime-core/internal/usecase/recommendation"
 	"github.com/kudanilll/kunime-core/internal/usecase/watch"
@@ -55,7 +56,6 @@ func NewApp() (*App, error) {
 	c := cron.New()
 	cleanupJob := job.NewCleanupWatchEventJob(firestoreClient, logger)
 	c.AddFunc("@every 1h", func() {
-		ctx := context.Background()
 		if err := cleanupJob.Run(ctx); err != nil {
 			logger.Error("cleanup job failed", zap.Error(err))
 		}
@@ -70,7 +70,6 @@ func NewApp() (*App, error) {
 	recUC := recommendation.NewBuildRecommendationUsecase(apiClient, recRepo)
 
 	c.AddFunc("@every 6h", func() {
-		ctx := context.Background()
 		if err := recUC.Execute(ctx); err != nil {
 			logger.Error("recommendation cron failed", zap.Error(err))
 		}
@@ -89,10 +88,15 @@ func NewApp() (*App, error) {
 	recReadUC := recommendation.NewGetRecommendationUsecase(recRepo)
 	recHandler := handler.NewRecommendationHandler(recReadUC)
 
+	appRepo := firestoreInfra.NewAppRepository(firestoreClient)
+	appUC := appUsecase.NewGetVersionUsecase(appRepo)
+	appHandler := handler.NewAppHandler(appUC)
+
 	handlers := &httpTransport.Handlers{
 		Watch:          watchHandler,
 		Popular:        popularHandler,
 		Recommendation: recHandler,
+		App:            appHandler,
 	}
 
 	if err := recUC.Execute(ctx); err != nil {

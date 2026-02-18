@@ -30,7 +30,7 @@ kunime-core/
 │   │   ├── recommendation.go
 │   │   ├── banner.go
 │   │   ├── genre.go
-│   │   └── release_state.go
+│   │   └── app.go
 │   ├── infra/
 │   │   ├── firestore/
 │   │   │   ├── client.go
@@ -39,7 +39,7 @@ kunime-core/
 │   │   │   ├── banner_repo.go
 │   │   │   ├── genre_repo.go
 │   │   │   ├── recommendation_repo.go
-│   │   │   └── release_repo.go
+│   │   │   └── app_repo.go
 │   │   ├── fcm/
 │   │   │   └── client.go
 │   │   └── http/
