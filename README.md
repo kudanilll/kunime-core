@@ -51,14 +51,13 @@ kunime-core/
 │   │       ├── router.go
 │   │       ├── middleware/
 │   │       │   ├── apikey.go
-│   │       │   └── device.go
 │   │       └── handler/
-│   │           ├── watch_handler.go
-│   │           ├── popular_handler.go
-│   │           ├── recommendation_handler.go
+│   │           ├── app_handler.go
 │   │           ├── banner_handler.go
 │   │           ├── genre_handler.go
-│   │           └── app_handler.go
+│   │           ├── popular_handler.go
+│   │           ├── recommendation_handler.go
+│   │           └── watch_handler.go
 │   ├── usecase/
 │   │   ├── watch/
 │   │   │   └── record_watch.go
@@ -70,7 +69,7 @@ kunime-core/
 │   │   ├── banner/
 │   │   │   └── get_active.go
 │   │   ├── genre/
-│   │   │   └── get_genres.go
+│   │   │   └── get_all.go
 │   │   └── app/
 │   │       ├── get_version.go
 │   │       └── update_version.go
