@@ -8,8 +8,9 @@ import (
 )
 
 type Handlers struct {
-	Watch   *handler.WatchHandler
-	Popular *handler.PopularHandler
+	Watch          *handler.WatchHandler
+	Popular        *handler.PopularHandler
+	Recommendation *handler.RecommendationHandler
 }
 
 func RegisterRoutes(app *fiber.App, h *Handlers) {
@@ -24,14 +25,8 @@ func RegisterRoutes(app *fiber.App, h *Handlers) {
 	api := app.Group("/api/v1", middleware.APIKey())
 
 	api.Post("/events/watch", h.Watch.Record)
-
 	api.Get("/anime/popular", h.Popular.Get)
-
-	api.Get("/recommendations", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"message": "recommendation endpoint (not implemented yet)",
-		})
-	})
+	api.Get("/recommendations", h.Recommendation.Get)
 
 	api.Get("/banners", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{

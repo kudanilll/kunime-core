@@ -20,39 +20,10 @@ kunime-core/
 │   └── api/
 │       └── main.go          # entry point (HTTP + cron)
 ├── internal/
-│   ├── config/
-│   │   └── config.go        # env, secrets, config loader
 │   ├── bootstrap/
 │   │   └── app.go           # init firestore, fcm, cron, router
-│   ├── transport/
-│   │   └── http/
-│   │       ├── router.go
-│   │       ├── middleware/
-│   │       │   ├── apikey.go
-│   │       │   └── device.go
-│   │       └── handler/
-│   │           ├── watch_handler.go
-│   │           ├── popular_handler.go
-│   │           ├── recommendation_handler.go
-│   │           ├── banner_handler.go
-│   │           ├── genre_handler.go
-│   │           └── app_handler.go
-│   ├── usecase/
-│   │   ├── watch/
-│   │   │   └── record_watch.go
-│   │   ├── popular/
-│   │   │   └── aggregate_popular.go
-│   │   ├── recommendation/
-│   │   │   └── global_top_rated.go
-│   │   ├── banner/
-│   │   │   └── get_banners.go
-│   │   ├── genre/
-│   │   │   └── get_genres.go
-│   │   └── app/
-│   │       └── get_version.go
-│   ├── job/
-│   │   ├── notify_release.go
-│   │   └── recommendation_cron.go
+│   ├── config/
+│   │   └── config.go        # env, secrets, config loader
 │   ├── domain/
 │   │   ├── watch_event.go
 │   │   ├── anime_popular.go
@@ -71,8 +42,37 @@ kunime-core/
 │   │   │   └── release_repo.go
 │   │   ├── fcm/
 │   │   │   └── client.go
-│   │   └── animeapi/
-│   │       └── client.go    # client ke kunime-api
+│   │   └── http/
+│   │       └── kunime_api_client.go
+│   ├── job/
+│   │   └── cleanup_watch_event.go
+│   ├── transport/
+│   │   └── http/
+│   │       ├── router.go
+│   │       ├── middleware/
+│   │       │   ├── apikey.go
+│   │       │   └── device.go
+│   │       └── handler/
+│   │           ├── watch_handler.go
+│   │           ├── popular_handler.go
+│   │           ├── recommendation_handler.go
+│   │           ├── banner_handler.go
+│   │           ├── genre_handler.go
+│   │           └── app_handler.go
+│   ├── usecase/
+│   │   ├── watch/
+│   │   │   └── record_watch.go
+│   │   ├── popular/
+│   │   │   └── get_popular.go
+│   │   ├── recommendation/
+│   │   │   ├── build_recommendation.go
+│   │   │   └── get_recommendation.go
+│   │   ├── banner/
+│   │   │   └── get_banners.go
+│   │   ├── genre/
+│   │   │   └── get_genres.go
+│   │   └── app/
+│   │       └── get_version.go
 │   └── util/
 │       ├── time.go
 │       └── response.go
