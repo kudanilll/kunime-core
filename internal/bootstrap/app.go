@@ -28,17 +28,13 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
-	cfg, err := config.Load()
-	if err != nil {
-		return nil, err
-	}
-
 	logger, err := zap.NewProduction()
+	ctx := context.Background()
+	cfg, err := config.Load()
+
 	if err != nil {
 		return nil, err
 	}
-
-	ctx := context.Background()
 
 	// Firebase init
 	fbApp, err := firebase.NewApp(ctx, nil)
