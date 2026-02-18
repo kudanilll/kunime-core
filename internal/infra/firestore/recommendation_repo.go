@@ -10,12 +10,12 @@ import (
 )
 
 type RecommendationItem struct {
-	AnimeID   string
-	Title     string
-	Rating    float64
-	Image     string
-	Source    string
-	UpdatedAt time.Time
+	AnimeID   string    `firestore:"anime_id"`
+	Title     string    `firestore:"title"`
+	Rating    float64   `firestore:"rating"`
+	Image     string    `firestore:"image"`
+	Source    string    `firestore:"source"`
+	UpdatedAt time.Time `firestore:"updated_at"`
 }
 
 type RecommendationRepository struct {

@@ -31,40 +31,49 @@ type BuildRecommendationUsecase struct {
 func NewBuildRecommendationUsecase(api APIClient, repo Repository) *BuildRecommendationUsecase {
 	return &BuildRecommendationUsecase{api: api, repo: repo}
 }
-
 func (u *BuildRecommendationUsecase) Execute(ctx context.Context) error {
-	var all []CompletedAnime
+	const (
+		TargetRecommendation = 5
+		MaxPage              = 10
+	)
 
-	for page := 1; page <= 10; page++ {
-		items, err := u.api.FetchCompleted(page)
+	var candidates []firestore.RecommendationItem
+
+	for page := 1; page <= MaxPage; page++ {
+		completed, err := u.api.FetchCompleted(page)
 		if err != nil {
 			return err
 		}
-		all = append(all, items...)
+
+		for _, anime := range completed {
+			// Filter rating
+			if anime.Rating <= 0 || anime.Rating > 10 {
+				continue
+			}
+
+			candidates = append(candidates, firestore.RecommendationItem{
+				AnimeID:   anime.AnimeID,
+				Title:     anime.Title,
+				Rating:    anime.Rating,
+				Image:     anime.Image,
+				Source:    "completed_top_rated",
+				UpdatedAt: time.Now(),
+			})
+		}
 	}
 
-	sort.Slice(all, func(i, j int) bool {
-		return all[i].Rating > all[j].Rating
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	// Sort by rating
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].Rating > candidates[j].Rating
 	})
 
-	top := all
-	if len(top) > 5 {
-		top = top[:5]
+	if len(candidates) > TargetRecommendation {
+		candidates = candidates[:TargetRecommendation]
 	}
 
-	var result []firestore.RecommendationItem
-	now := time.Now()
-
-	for _, a := range top {
-		result = append(result, firestore.RecommendationItem{
-			AnimeID:   a.AnimeID,
-			Title:     a.Title,
-			Rating:    a.Rating,
-			Image:     a.Image,
-			Source:    "completed_top_rated",
-			UpdatedAt: now,
-		})
-	}
-
-	return u.repo.ReplaceAll(ctx, result)
+	return u.repo.ReplaceAll(ctx, candidates)
 }

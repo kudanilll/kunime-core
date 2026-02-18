@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/kudanilll/kunime-core/internal/usecase/recommendation"
@@ -64,7 +65,7 @@ func (c *KunimeAPIClient) FetchCompleted(
 	var result []recommendation.CompletedAnime
 	for _, a := range raw.Data {
 		result = append(result, recommendation.CompletedAnime{
-			AnimeID: a.Endpoint, // sementara, MVP
+			AnimeID: extractAnimeSlug(a.Endpoint),
 			Title:   a.Title,
 			Rating:  a.Score,
 			Image:   a.Image,
@@ -72,4 +73,10 @@ func (c *KunimeAPIClient) FetchCompleted(
 	}
 
 	return result, nil
+}
+
+func extractAnimeSlug(endpoint string) string {
+	u := strings.TrimSuffix(endpoint, "/")
+	parts := strings.Split(u, "/")
+	return parts[len(parts)-1]
 }
