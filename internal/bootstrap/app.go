@@ -16,6 +16,7 @@ import (
 	httpTransport "github.com/kudanilll/kunime-core/internal/transport/http"
 	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
 	appUsecase "github.com/kudanilll/kunime-core/internal/usecase/app"
+	bannerUsecase "github.com/kudanilll/kunime-core/internal/usecase/banner"
 	"github.com/kudanilll/kunime-core/internal/usecase/popular"
 	"github.com/kudanilll/kunime-core/internal/usecase/recommendation"
 	"github.com/kudanilll/kunime-core/internal/usecase/watch"
@@ -89,11 +90,16 @@ func NewApp() (*App, error) {
 	appUpdateUC := appUsecase.NewUpdateVersionUsecase(appRepo)
 	appHandler := handler.NewAppHandler(appGetUC, appUpdateUC)
 
+	bannerRepo := firestoreInfra.NewBannerRepository(firestoreClient)
+	bannerUC := bannerUsecase.NewGetActiveUsecase(bannerRepo)
+	bannerHandler := handler.NewBannerHandler(bannerUC)
+
 	handlers := &httpTransport.Handlers{
 		Watch:          watchHandler,
 		Popular:        popularHandler,
 		Recommendation: recHandler,
 		App:            appHandler,
+		Banner:         bannerHandler,
 	}
 
 	if err := recUC.Execute(ctx); err != nil {

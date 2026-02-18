@@ -13,6 +13,7 @@ type Handlers struct {
 	Popular        *handler.PopularHandler
 	Recommendation *handler.RecommendationHandler
 	App            *handler.AppHandler
+	Banner         *handler.BannerHandler
 }
 
 func RegisterRoutes(app *fiber.App, h *Handlers) {
@@ -36,9 +37,7 @@ func RegisterRoutes(app *fiber.App, h *Handlers) {
 	api.Post("/events/watch", h.Watch.Record)
 	api.Get("/anime/popular", h.Popular.Get)
 	api.Get("/recommendations", h.Recommendation.Get)
-	api.Get("/banners", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"message": "banner endpoint (not implemented yet)"})
-	})
+	api.Get("/banners", h.Banner.Get)
 	api.Get("/genres", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"message": "genre endpoint (not implemented yet)"})
 	})

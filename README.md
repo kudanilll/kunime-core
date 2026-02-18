@@ -68,7 +68,7 @@ kunime-core/
 │   │   │   ├── build_recommendation.go
 │   │   │   └── get_recommendation.go
 │   │   ├── banner/
-│   │   │   └── get_banners.go
+│   │   │   └── get_active.go
 │   │   ├── genre/
 │   │   │   └── get_genres.go
 │   │   └── app/
