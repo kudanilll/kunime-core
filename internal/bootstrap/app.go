@@ -2,12 +2,15 @@ package bootstrap
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
 
 	firebase "firebase.google.com/go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
+	"google.golang.org/api/option"
 
 	"github.com/kudanilll/kunime-core/internal/config"
 	firestoreInfra "github.com/kudanilll/kunime-core/internal/infra/firestore"
@@ -39,7 +42,12 @@ func NewApp() (*App, error) {
 	}
 
 	// Firebase init
-	fbApp, err := firebase.NewApp(ctx, nil)
+	credentialsJSON, err := decodeFirebaseCredentials(cfg.FirebaseCredentialsBase64)
+	if err != nil {
+		return nil, err
+	}
+
+	fbApp, err := firebase.NewApp(ctx, nil, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
 		logger.Fatal("failed to initialize firebase app", zap.Error(err))
 		return nil, err
@@ -135,4 +143,17 @@ func (a *App) Run() error {
 	addr := fmt.Sprintf(":%s", config.AppPort())
 	a.Logger.Info("starting server", zap.String("addr", addr))
 	return a.Fiber.Listen(addr)
+}
+
+func decodeFirebaseCredentials(value string) ([]byte, error) {
+	if value == "" {
+		return nil, errors.New("FIREBASE_CREDENTIALS_BASE64 is required")
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid FIREBASE_CREDENTIALS_BASE64: %w", err)
+	}
+
+	return decoded, nil
 }

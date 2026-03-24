@@ -19,6 +19,8 @@ RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=builder /out/kunime-core /app/kunime-core
 
+ENV APP_PORT=8080
+
 EXPOSE 8080
 
 CMD ["/app/kunime-core"]

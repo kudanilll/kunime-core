@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	AppPort          string
-	Env              string
-	ClientAPIKey     string
-	AdminAPIKey      string
-	KunimeAPIBaseURL string
-	KunimeAPIKey     string
+	AppPort                   string
+	Env                       string
+	ClientAPIKey              string
+	AdminAPIKey               string
+	KunimeAPIBaseURL          string
+	KunimeAPIKey              string
+	FirebaseCredentialsBase64 string
 }
 
 var cfg *Config
@@ -21,12 +22,13 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg = &Config{
-		AppPort:          getEnv("APP_PORT", "8080"),
-		Env:              getEnv("APP_ENV", "development"),
-		ClientAPIKey:     getEnv("CLIENT_API_KEY", ""),
-		AdminAPIKey:      getEnv("ADMIN_API_KEY", ""),
-		KunimeAPIBaseURL: getEnv("KUNIME_API_BASE_URL", ""),
-		KunimeAPIKey:     getEnv("KUNIME_API_KEY", ""),
+		AppPort:                   getEnv("APP_PORT", "8080"),
+		Env:                       getEnv("APP_ENV", "development"),
+		ClientAPIKey:              getEnv("CLIENT_API_KEY", ""),
+		AdminAPIKey:               getEnv("ADMIN_API_KEY", ""),
+		KunimeAPIBaseURL:          getEnv("KUNIME_API_BASE_URL", ""),
+		KunimeAPIKey:              getEnv("KUNIME_API_KEY", ""),
+		FirebaseCredentialsBase64: getEnv("FIREBASE_CREDENTIALS_BASE64", ""),
 	}
 
 	return cfg, nil
@@ -58,4 +60,11 @@ func AdminAPIKey() string {
 		return ""
 	}
 	return cfg.AdminAPIKey
+}
+
+func FirebaseCredentialsBase64() string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.FirebaseCredentialsBase64
 }
