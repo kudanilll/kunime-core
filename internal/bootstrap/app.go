@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/api/option"
 
 	"github.com/kudanilll/kunime-core/internal/config"
@@ -33,10 +34,14 @@ type App struct {
 }
 
 func NewApp() (*App, error) {
-	logger, err := zap.NewProduction()
 	ctx := context.Background()
 	cfg, err := config.Load()
 
+	if err != nil {
+		return nil, err
+	}
+
+	logger, err := newLogger(cfg.Env)
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +76,10 @@ func NewApp() (*App, error) {
 	apiClient := httpInfra.NewKunimeAPIClient(
 		cfg.KunimeAPIBaseURL,
 		cfg.KunimeAPIKey,
+		logger,
 	)
 
-	recUC := recommendation.NewBuildRecommendationUsecase(apiClient, recRepo)
+	recUC := recommendation.NewBuildRecommendationUsecase(apiClient, recRepo, logger)
 
 	c.AddFunc("@every 1h", func() {
 		if err := recUC.Execute(ctx); err != nil {
@@ -92,7 +98,7 @@ func NewApp() (*App, error) {
 	watchHandler := handler.NewWatchHandler(watchUC)
 
 	recReadUC := recommendation.NewGetRecommendationUsecase(recRepo)
-	recHandler := handler.NewRecommendationHandler(recReadUC)
+	recHandler := handler.NewRecommendationHandler(recReadUC, recUC, logger)
 
 	appRepo := firestoreInfra.NewAppRepository(firestoreClient)
 	appGetUC := appUsecase.NewGetVersionUsecase(appRepo)
@@ -156,4 +162,28 @@ func decodeFirebaseCredentials(value string) ([]byte, error) {
 	}
 
 	return decoded, nil
+}
+
+func newLogger(env string) (*zap.Logger, error) {
+	if env == "development" {
+		cfg := zap.NewDevelopmentConfig()
+		cfg.Encoding = "console"
+		cfg.EncoderConfig.TimeKey = "time"
+		cfg.EncoderConfig.LevelKey = "level"
+		cfg.EncoderConfig.MessageKey = "msg"
+		cfg.EncoderConfig.CallerKey = ""
+		cfg.EncoderConfig.StacktraceKey = ""
+		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		cfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("15:04:05")
+		cfg.OutputPaths = []string{"stdout"}
+		cfg.ErrorOutputPaths = []string{"stderr"}
+		cfg.DisableStacktrace = true
+		return cfg.Build()
+	}
+
+	cfg := zap.NewProductionConfig()
+	cfg.OutputPaths = []string{"stdout"}
+	cfg.ErrorOutputPaths = []string{"stderr"}
+	cfg.DisableStacktrace = false
+	return cfg.Build()
 }

@@ -221,6 +221,29 @@ Possible error responses:
 
 ---
 
+### 4b) Refresh Recommendations (Admin)
+
+**POST** `/api/v1/admin/recommendations/refresh`
+
+Headers:
+
+- `X-API-Key` (admin key)
+
+Success response `200`:
+
+```json
+{
+  "message": "recommendations refreshed"
+}
+```
+
+Possible error responses:
+
+- `500` `failed to refresh recommendations`
+- `401` missing/invalid API key
+
+---
+
 ### 5) Get Banners (Client)
 
 **GET** `/api/v1/banners`

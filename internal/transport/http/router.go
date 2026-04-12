@@ -29,6 +29,7 @@ func RegisterRoutes(app *fiber.App, h *Handlers) {
 	)
 
 	admin.Post("/app/version", h.App.UpdateVersion)
+	admin.Post("/recommendations/refresh", h.Recommendation.Refresh)
 
 	// Client routes
 	api := app.Group("/api/v1",

@@ -10,20 +10,23 @@ import (
 	"time"
 
 	"github.com/kudanilll/kunime-core/internal/usecase/recommendation"
+	"go.uber.org/zap"
 )
 
 type KunimeAPIClient struct {
 	baseURL       string
 	apiKey        string
 	client        *http.Client
+	logger        *zap.Logger
 	mu            sync.RWMutex
 	scrapeBaseURL string
 }
 
-func NewKunimeAPIClient(baseURL, apiKey string) *KunimeAPIClient {
+func NewKunimeAPIClient(baseURL, apiKey string, logger *zap.Logger) *KunimeAPIClient {
 	return &KunimeAPIClient{
 		baseURL: baseURL,
 		apiKey:  apiKey,
+		logger:  logger,
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -35,13 +38,16 @@ func (c *KunimeAPIClient) FetchCompleted(
 ) ([]recommendation.CompletedAnime, error) {
 	scrapeBaseURL, err := c.getScrapeBaseURL()
 	if err != nil {
+		c.logger.Error("recommendation fetch failed to get scrape base url", zap.Error(err))
 		return nil, err
 	}
 
 	url := fmt.Sprintf("%s/completed-anime/%d", c.baseURL, page)
+	c.logger.Info("recommendation fetch completed anime request", zap.Int("page", page), zap.String("url", url))
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
+		c.logger.Error("recommendation fetch failed to create request", zap.Int("page", page), zap.Error(err))
 		return nil, err
 	}
 
@@ -50,12 +56,15 @@ func (c *KunimeAPIClient) FetchCompleted(
 
 	resp, err := c.client.Do(req)
 	if err != nil {
+		c.logger.Error("recommendation fetch request failed", zap.Int("page", page), zap.Error(err))
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("kunime-api returned %d", resp.StatusCode)
+		err := fmt.Errorf("kunime-api returned %d", resp.StatusCode)
+		c.logger.Error("recommendation fetch returned non-200", zap.Int("page", page), zap.Int("status_code", resp.StatusCode), zap.Error(err))
+		return nil, err
 	}
 
 	var raw struct {
@@ -68,8 +77,11 @@ func (c *KunimeAPIClient) FetchCompleted(
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		c.logger.Error("recommendation fetch failed to decode response", zap.Int("page", page), zap.Error(err))
 		return nil, err
 	}
+
+	c.logger.Info("recommendation fetch completed anime success", zap.Int("page", page), zap.Int("items", len(raw.Data)))
 
 	var result []recommendation.CompletedAnime
 	for _, a := range raw.Data {
@@ -106,9 +118,11 @@ func (c *KunimeAPIClient) getScrapeBaseURL() (string, error) {
 
 func (c *KunimeAPIClient) fetchScrapeBaseURL() (string, error) {
 	url := fmt.Sprintf("%s/scrape-base-url", c.baseURL)
+	c.logger.Info("recommendation fetch scrape base url request", zap.String("url", url))
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
+		c.logger.Error("recommendation fetch scrape base url failed to create request", zap.Error(err))
 		return "", err
 	}
 
@@ -117,12 +131,15 @@ func (c *KunimeAPIClient) fetchScrapeBaseURL() (string, error) {
 
 	resp, err := c.client.Do(req)
 	if err != nil {
+		c.logger.Error("recommendation fetch scrape base url request failed", zap.Error(err))
 		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("scrape-base-url returned %d", resp.StatusCode)
+		err := fmt.Errorf("scrape-base-url returned %d", resp.StatusCode)
+		c.logger.Error("recommendation fetch scrape base url returned non-200", zap.Int("status_code", resp.StatusCode), zap.Error(err))
+		return "", err
 	}
 
 	var raw struct {
@@ -130,10 +147,14 @@ func (c *KunimeAPIClient) fetchScrapeBaseURL() (string, error) {
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		c.logger.Error("recommendation fetch scrape base url failed to decode response", zap.Error(err))
 		return "", err
 	}
 
-	return strings.TrimRight(raw.ScrapeBaseURL, "/"), nil
+	result := strings.TrimRight(raw.ScrapeBaseURL, "/")
+	c.logger.Info("recommendation fetch scrape base url success", zap.String("scrape_base_url", result))
+
+	return result, nil
 }
 
 func buildScrapeImageURL(scrapeBaseURL, imageURL string) string {
