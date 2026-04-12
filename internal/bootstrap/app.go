@@ -75,7 +75,7 @@ func NewApp() (*App, error) {
 
 	recUC := recommendation.NewBuildRecommendationUsecase(apiClient, recRepo)
 
-	c.AddFunc("@every 6h", func() {
+	c.AddFunc("@every 1h", func() {
 		if err := recUC.Execute(ctx); err != nil {
 			logger.Error("recommendation cron failed", zap.Error(err))
 		}
