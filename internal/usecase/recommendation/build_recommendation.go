@@ -36,7 +36,7 @@ func NewBuildRecommendationUsecase(api APIClient, repo Repository, logger *zap.L
 func (u *BuildRecommendationUsecase) Execute(ctx context.Context) error {
 	const (
 		TargetRecommendation = 5
-		MaxPage              = 10
+		MaxPage              = 5
 	)
 
 	u.logger.Info("recommendation build started", zap.Int("target_recommendation", TargetRecommendation), zap.Int("max_page", MaxPage))
