@@ -5,7 +5,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/robfig/cron/v3"
@@ -28,9 +33,11 @@ import (
 )
 
 type App struct {
-	Fiber     *fiber.App
-	Logger    *zap.Logger
-	Firestore *firebase.App
+	Fiber      *fiber.App
+	Logger     *zap.Logger
+	Firestore  *firebase.App
+	FireClient *firestore.Client
+	Cron       *cron.Cron
 }
 
 func NewApp() (*App, error) {
@@ -54,7 +61,7 @@ func NewApp() (*App, error) {
 
 	fbApp, err := firebase.NewApp(ctx, nil, option.WithCredentialsJSON(credentialsJSON))
 	if err != nil {
-		logger.Fatal("failed to initialize firebase app", zap.Error(err))
+		logger.Error("failed to initialize firebase app", zap.Error(err))
 		return nil, err
 	}
 
@@ -67,7 +74,10 @@ func NewApp() (*App, error) {
 	c := cron.New()
 	cleanupJob := job.NewCleanupWatchEventJob(firestoreClient, logger)
 	c.AddFunc("@every 1h", func() {
-		if err := cleanupJob.Run(ctx); err != nil {
+		// Fix M-06: Use context with timeout for cron jobs
+		jobCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		if err := cleanupJob.Run(jobCtx); err != nil {
 			logger.Error("cleanup job failed", zap.Error(err))
 		}
 	})
@@ -82,7 +92,10 @@ func NewApp() (*App, error) {
 	recUC := recommendation.NewBuildRecommendationUsecase(apiClient, recRepo, logger)
 
 	c.AddFunc("@every 1h", func() {
-		if err := recUC.Execute(ctx); err != nil {
+		// Fix M-06: Use context with timeout for cron jobs
+		jobCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		if err := recUC.Execute(jobCtx); err != nil {
 			logger.Error("recommendation cron failed", zap.Error(err))
 		}
 	})
@@ -139,16 +152,58 @@ func NewApp() (*App, error) {
 	logger.Info("application initialized")
 
 	return &App{
-		Fiber:     app,
-		Logger:    logger,
-		Firestore: fbApp,
+		Fiber:      app,
+		Logger:     logger,
+		Firestore:  fbApp,
+		FireClient: firestoreClient,
+		Cron:       c,
 	}, nil
 }
 
 func (a *App) Run() error {
 	addr := fmt.Sprintf(":%s", config.AppPort())
-	a.Logger.Info("starting server", zap.String("addr", addr))
-	return a.Fiber.Listen(addr)
+	
+	// Start server in goroutine
+	go func() {
+		a.Logger.Info("starting server", zap.String("addr", addr))
+		if err := a.Fiber.Listen(addr); err != nil {
+			a.Logger.Error("server error", zap.Error(err))
+		}
+	}()
+
+	// Wait for interrupt signal for graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	a.Logger.Info("shutting down gracefully...")
+
+	// Stop cron scheduler
+	if a.Cron != nil {
+		a.Cron.Stop()
+	}
+
+	// Shutdown Fiber with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	if err := a.Fiber.ShutdownWithContext(ctx); err != nil {
+		a.Logger.Error("fiber shutdown error", zap.Error(err))
+	}
+
+	// Close Firestore
+	if a.FireClient != nil {
+		if err := a.FireClient.Close(); err != nil {
+			a.Logger.Error("firestore close error", zap.Error(err))
+		}
+	}
+
+	// Sync logger
+	if a.Logger != nil {
+		_ = a.Logger.Sync()
+	}
+
+	return nil
 }
 
 func decodeFirebaseCredentials(value string) ([]byte, error) {

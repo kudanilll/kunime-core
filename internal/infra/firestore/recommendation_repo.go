@@ -30,25 +30,55 @@ func (r *RecommendationRepository) ReplaceAll(
 	ctx context.Context,
 	items []RecommendationItem,
 ) error {
-	batch := r.client.Batch()
-
 	col := r.client.Collection("anime_recommendation")
 
 	docs, err := col.Documents(ctx).GetAll()
 	if err != nil {
 		return err
 	}
-	for _, d := range docs {
-		batch.Delete(d.Ref)
+
+	batch := r.client.Batch()
+	opCount := 0
+
+	// Helper to commit and reset batch when limit is reached
+	commitBatchIfFull := func() error {
+		if opCount >= 500 {
+			if _, err := batch.Commit(ctx); err != nil {
+				return err
+			}
+			batch = r.client.Batch()
+			opCount = 0
+		}
+		return nil
 	}
 
+	// Queue deletes
+	for _, d := range docs {
+		batch.Delete(d.Ref)
+		opCount++
+		if err := commitBatchIfFull(); err != nil {
+			return err
+		}
+	}
+
+	// Queue inserts
 	for _, item := range items {
 		ref := col.Doc(item.AnimeID)
 		batch.Set(ref, item)
+		opCount++
+		if err := commitBatchIfFull(); err != nil {
+			return err
+		}
 	}
 
-	_, err = batch.Commit(ctx)
-	return err
+	// Commit any remaining operations
+	if opCount > 0 {
+		if _, err := batch.Commit(ctx); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *RecommendationRepository) GetAll(
