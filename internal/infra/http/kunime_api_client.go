@@ -15,12 +15,13 @@ import (
 )
 
 type KunimeAPIClient struct {
-	baseURL       string
-	apiKey        string
-	client        *http.Client
-	logger        *zap.Logger
-	mu            sync.RWMutex
-	scrapeBaseURL string
+	baseURL                string
+	apiKey                 string
+	client                 *http.Client
+	logger                 *zap.Logger
+	mu                     sync.RWMutex
+	scrapeBaseURL          string
+	scrapeBaseURLUpdatedAt time.Time
 }
 
 func NewKunimeAPIClient(baseURL, apiKey string, logger *zap.Logger) *KunimeAPIClient {
@@ -101,8 +102,11 @@ func (c *KunimeAPIClient) FetchCompleted(
 func (c *KunimeAPIClient) getScrapeBaseURL(ctx context.Context) (string, error) {
 	c.mu.RLock()
 	val := c.scrapeBaseURL
+	updatedAt := c.scrapeBaseURLUpdatedAt
 	c.mu.RUnlock()
-	if val != "" {
+
+	// ponytail: 15-minute simple TTL cache.
+	if val != "" && time.Since(updatedAt) < 15*time.Minute {
 		return val, nil
 	}
 
@@ -110,16 +114,22 @@ func (c *KunimeAPIClient) getScrapeBaseURL(ctx context.Context) (string, error) 
 	defer c.mu.Unlock()
 
 	// Check again after acquiring write lock
-	if c.scrapeBaseURL != "" {
+	if c.scrapeBaseURL != "" && time.Since(c.scrapeBaseURLUpdatedAt) < 15*time.Minute {
 		return c.scrapeBaseURL, nil
 	}
 
 	scrapeBaseURL, err := c.fetchScrapeBaseURL(ctx)
 	if err != nil {
+		// Fallback to stale cache if fetch fails
+		if c.scrapeBaseURL != "" {
+			c.logger.Warn("failed to fetch new scrape_base_url, returning stale value", zap.Error(err))
+			return c.scrapeBaseURL, nil
+		}
 		return "", err
 	}
 
 	c.scrapeBaseURL = scrapeBaseURL
+	c.scrapeBaseURLUpdatedAt = time.Now()
 
 	return scrapeBaseURL, nil
 }
