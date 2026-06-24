@@ -30,7 +30,7 @@ func (h *WatchHandler) Record(c *fiber.Ctx) error {
 	deviceID := c.Get("X-Device-Id")
 
 	if err := h.usecase.Execute(
-		c.Context(),
+		c.UserContext(),
 		req.AnimeID,
 		req.Episode,
 		deviceID,

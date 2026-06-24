@@ -23,7 +23,7 @@ func (h *PopularHandler) Get(c *fiber.Ctx) error {
 		limit = 10
 	}
 
-	items, err := h.usecase.Execute(c.Context(), limit)
+	items, err := h.usecase.Execute(c.UserContext(), limit)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to fetch popular anime",

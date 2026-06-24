@@ -10,7 +10,7 @@ import (
 )
 
 type APIClient interface {
-	FetchCompleted(page int) ([]CompletedAnime, error)
+	FetchCompleted(ctx context.Context, page int) ([]CompletedAnime, error)
 }
 
 type CompletedAnime struct {
@@ -44,7 +44,7 @@ func (u *BuildRecommendationUsecase) Execute(ctx context.Context) error {
 	var candidates []firestore.RecommendationItem
 
 	for page := 1; page <= MaxPage; page++ {
-		completed, err := u.api.FetchCompleted(page)
+		completed, err := u.api.FetchCompleted(ctx, page)
 		if err != nil {
 			u.logger.Error("recommendation build failed while fetching completed anime", zap.Int("page", page), zap.Error(err))
 			return err

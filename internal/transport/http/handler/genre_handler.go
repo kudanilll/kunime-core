@@ -16,7 +16,7 @@ func NewGenreHandler(uc *genre.GetAllUsecase) *GenreHandler {
 }
 
 func (h *GenreHandler) Get(c *fiber.Ctx) error {
-	data, err := h.uc.Execute(c.Context())
+	data, err := h.uc.Execute(c.UserContext())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to fetch genres",
