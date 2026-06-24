@@ -162,7 +162,7 @@ func NewApp() (*App, error) {
 
 func (a *App) Run() error {
 	addr := fmt.Sprintf(":%s", config.AppPort())
-	
+
 	// Start server in goroutine
 	go func() {
 		a.Logger.Info("starting server", zap.String("addr", addr))
