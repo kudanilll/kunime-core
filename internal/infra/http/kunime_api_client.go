@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -34,9 +35,10 @@ func NewKunimeAPIClient(baseURL, apiKey string, logger *zap.Logger) *KunimeAPICl
 }
 
 func (c *KunimeAPIClient) FetchCompleted(
+	ctx context.Context,
 	page int,
 ) ([]recommendation.CompletedAnime, error) {
-	scrapeBaseURL, err := c.getScrapeBaseURL()
+	scrapeBaseURL, err := c.getScrapeBaseURL(ctx)
 	if err != nil {
 		c.logger.Error("recommendation fetch failed to get scrape base url", zap.Error(err))
 		return nil, err
@@ -45,7 +47,7 @@ func (c *KunimeAPIClient) FetchCompleted(
 	url := fmt.Sprintf("%s/completed-anime/%d", c.baseURL, page)
 	c.logger.Info("recommendation fetch completed anime request", zap.Int("page", page), zap.String("url", url))
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		c.logger.Error("recommendation fetch failed to create request", zap.Int("page", page), zap.Error(err))
 		return nil, err
@@ -96,31 +98,37 @@ func (c *KunimeAPIClient) FetchCompleted(
 	return result, nil
 }
 
-func (c *KunimeAPIClient) getScrapeBaseURL() (string, error) {
+func (c *KunimeAPIClient) getScrapeBaseURL(ctx context.Context) (string, error) {
 	c.mu.RLock()
+	val := c.scrapeBaseURL
+	c.mu.RUnlock()
+	if val != "" {
+		return val, nil
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Check again after acquiring write lock
 	if c.scrapeBaseURL != "" {
-		defer c.mu.RUnlock()
 		return c.scrapeBaseURL, nil
 	}
-	c.mu.RUnlock()
 
-	scrapeBaseURL, err := c.fetchScrapeBaseURL()
+	scrapeBaseURL, err := c.fetchScrapeBaseURL(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	c.mu.Lock()
 	c.scrapeBaseURL = scrapeBaseURL
-	c.mu.Unlock()
 
 	return scrapeBaseURL, nil
 }
 
-func (c *KunimeAPIClient) fetchScrapeBaseURL() (string, error) {
+func (c *KunimeAPIClient) fetchScrapeBaseURL(ctx context.Context) (string, error) {
 	url := fmt.Sprintf("%s/scrape-base-url", c.baseURL)
 	c.logger.Info("recommendation fetch scrape base url request", zap.String("url", url))
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		c.logger.Error("recommendation fetch scrape base url failed to create request", zap.Error(err))
 		return "", err

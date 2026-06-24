@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/kudanilll/kunime-core/internal/usecase/popular"
+	"github.com/kudanilll/kunime-core/internal/domain"
 	"google.golang.org/api/iterator"
 )
 
@@ -22,7 +22,7 @@ func (r *PopularRepository) Increment(ctx context.Context, animeID string) error
 
 	_, err := doc.Set(ctx, map[string]interface{}{
 		"watch_count":  firestore.Increment(1),
-		"last_updated": time.Now(),
+		"last_updated": time.Now().UTC(),
 	}, firestore.MergeAll)
 
 	return err
@@ -31,7 +31,7 @@ func (r *PopularRepository) Increment(ctx context.Context, animeID string) error
 func (r *PopularRepository) GetTop(
 	ctx context.Context,
 	limit int,
-) ([]popular.Item, error) {
+) ([]domain.AnimePopular, error) {
 	if limit <= 0 {
 		limit = 10
 	}
@@ -44,7 +44,7 @@ func (r *PopularRepository) GetTop(
 
 	defer iter.Stop()
 
-	var result []popular.Item
+	var result []domain.AnimePopular
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -62,7 +62,7 @@ func (r *PopularRepository) GetTop(
 			return nil, err
 		}
 
-		result = append(result, popular.Item{
+		result = append(result, domain.AnimePopular{
 			AnimeID:    doc.Ref.ID,
 			WatchCount: data.WatchCount,
 		})

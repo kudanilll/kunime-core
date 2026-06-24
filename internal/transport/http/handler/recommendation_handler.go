@@ -27,7 +27,7 @@ func NewRecommendationHandler(
 }
 
 func (h *RecommendationHandler) Get(c *fiber.Ctx) error {
-	items, err := h.getUC.Execute(c.Context())
+	items, err := h.getUC.Execute(c.UserContext())
 	if err != nil {
 		h.logger.Error("recommendation get failed", zap.Error(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -46,7 +46,7 @@ func (h *RecommendationHandler) Get(c *fiber.Ctx) error {
 
 func (h *RecommendationHandler) Refresh(c *fiber.Ctx) error {
 	h.logger.Info("recommendation manual refresh requested")
-	if err := h.buildUC.Execute(c.Context()); err != nil {
+	if err := h.buildUC.Execute(c.UserContext()); err != nil {
 		h.logger.Error("recommendation manual refresh failed", zap.Error(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to refresh recommendations",

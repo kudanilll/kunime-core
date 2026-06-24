@@ -23,7 +23,7 @@ func NewAppHandler(
 }
 
 func (h *AppHandler) GetVersion(c *fiber.Ctx) error {
-	result, err := h.getUC.Execute(c.Context())
+	result, err := h.getUC.Execute(c.UserContext())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get app version",
@@ -50,7 +50,7 @@ func (h *AppHandler) UpdateVersion(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.updateUC.Execute(c.Context(), &payload); err != nil {
+	if err := h.updateUC.Execute(c.UserContext(), &payload); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to update version",
 		})

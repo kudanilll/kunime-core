@@ -57,7 +57,7 @@ func (u *RecordWatchUsecase) Execute(
 		ExpiresAt: now.Add(14 * 24 * time.Hour),
 	}
 
-	// Save watch event
+	// ponytail: firestore transaction skipped, eventual consistency is fine for view counts
 	if err := u.watchRepo.Save(ctx, event); err != nil {
 		return err
 	}

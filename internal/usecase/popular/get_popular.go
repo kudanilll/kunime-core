@@ -1,14 +1,13 @@
 package popular
 
-import "context"
+import (
+	"context"
+
+	"github.com/kudanilll/kunime-core/internal/domain"
+)
 
 type Repository interface {
-	GetTop(ctx context.Context, limit int) ([]Item, error)
-}
-
-type Item struct {
-	AnimeID    string `json:"anime_id"`
-	WatchCount int64  `json:"watch_count"`
+	GetTop(ctx context.Context, limit int) ([]domain.AnimePopular, error)
 }
 
 type GetPopularUsecase struct {
@@ -22,6 +21,6 @@ func NewGetPopularUsecase(repo Repository) *GetPopularUsecase {
 func (u *GetPopularUsecase) Execute(
 	ctx context.Context,
 	limit int,
-) ([]Item, error) {
+) ([]domain.AnimePopular, error) {
 	return u.repo.GetTop(ctx, limit)
 }
