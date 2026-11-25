@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/kudanilll/kunime-core/internal/domain"
 	"github.com/kudanilll/kunime-core/internal/usecase/app"
@@ -22,8 +22,8 @@ func NewAppHandler(
 	}
 }
 
-func (h *AppHandler) GetVersion(c *fiber.Ctx) error {
-	result, err := h.getUC.Execute(c.UserContext())
+func (h *AppHandler) GetVersion(c fiber.Ctx) error {
+	result, err := h.getUC.Execute(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get app version",
@@ -35,10 +35,10 @@ func (h *AppHandler) GetVersion(c *fiber.Ctx) error {
 	})
 }
 
-func (h *AppHandler) UpdateVersion(c *fiber.Ctx) error {
+func (h *AppHandler) UpdateVersion(c fiber.Ctx) error {
 	var payload domain.AppVersion
 
-	if err := c.BodyParser(&payload); err != nil {
+	if err := c.Bind().Body(&payload); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
@@ -50,7 +50,7 @@ func (h *AppHandler) UpdateVersion(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := h.updateUC.Execute(c.UserContext(), &payload); err != nil {
+	if err := h.updateUC.Execute(c.Context(), &payload); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to update version",
 		})

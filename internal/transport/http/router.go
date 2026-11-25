@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/kudanilll/kunime-core/internal/config"
 
 	"github.com/kudanilll/kunime-core/internal/transport/http/handler"
@@ -19,7 +19,7 @@ type Handlers struct {
 
 func RegisterRoutes(app *fiber.App, h *Handlers) {
 	// Health
-	app.Get("/health", func(c *fiber.Ctx) error {
+	app.Get("/health", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 

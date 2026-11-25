@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/kudanilll/kunime-core/internal/domain"
 	"github.com/kudanilll/kunime-core/internal/usecase/banner"
@@ -15,8 +15,8 @@ func NewBannerHandler(uc *banner.GetActiveUsecase) *BannerHandler {
 	return &BannerHandler{uc: uc}
 }
 
-func (h *BannerHandler) Get(c *fiber.Ctx) error {
-	data, err := h.uc.Execute(c.UserContext())
+func (h *BannerHandler) Get(c fiber.Ctx) error {
+	data, err := h.uc.Execute(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to fetch banners",

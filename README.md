@@ -2,10 +2,12 @@
 
 Backend API for Kunime mobile app data (watch events, popular anime, recommendations, banners, genres, and app versioning).
 
+Requires Go 1.27.4+ and uses Fiber v3 and Firebase Admin v4. Recommendations are rebuilt from top-rated completed anime; Firebase Cloud Messaging is not initialized by this service.
+
 ## Run Locally
 
 1. Copy `.env.example` to `.env`
-2. Fill in required environment variables
+2. Fill in required environment variables. `KUNIME_API_BASE_URL` must end in `/api/v1` with no trailing slash. Use a different `APP_PORT` if the scraper API is running on `8080`.
 3. Run:
 
 ```bash
@@ -13,6 +15,8 @@ go run cmd/api/main.go
 ```
 
 Server default: `http://localhost:8080`
+
+Run `go test -mod=readonly ./...` for the local watch-event route contract test; it uses an in-memory fake instead of Firestore.
 
 ---
 
@@ -25,7 +29,7 @@ kunime-core/
 │       └── main.go                     # entry point (HTTP + cron)
 ├── internal/
 │   ├── bootstrap/
-│   │   └── app.go                      # init firestore, fcm, cron, router
+│   │   └── app.go                      # init Firestore, cron, and router
 │   ├── config/
 │   │   └── config.go                   # env/config loader
 │   ├── domain/
@@ -175,8 +179,9 @@ Success response `200`:
 {
   "data": [
     {
-      "anime_id": "one-piece",
-      "watch_count": 1234
+      "AnimeID": "one-piece",
+      "WatchCount": 1234,
+      "LastUpdated": "0001-01-01T00:00:00Z"
     }
   ]
 }
@@ -203,7 +208,7 @@ Success response `200`:
       "title": "Sousou no Frieren",
       "rating": 9.1,
       "image": "https://...",
-      "source": "jikan",
+      "source": "completed_top_rated",
       "updated_at": "2026-02-20T15:00:00Z"
     }
   ]

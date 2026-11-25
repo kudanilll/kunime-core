@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	firebase "firebase.google.com/go"
-	"github.com/gofiber/fiber/v2"
+	firebase "firebase.google.com/go/v4"
+	"github.com/gofiber/fiber/v3"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
