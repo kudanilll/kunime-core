@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/kudanilll/kunime-core/internal/usecase/watch"
 )
@@ -19,9 +19,9 @@ type watchRequest struct {
 	Episode int    `json:"episode"`
 }
 
-func (h *WatchHandler) Record(c *fiber.Ctx) error {
+func (h *WatchHandler) Record(c fiber.Ctx) error {
 	var req watchRequest
-	if err := c.BodyParser(&req); err != nil {
+	if err := c.Bind().Body(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
@@ -30,7 +30,7 @@ func (h *WatchHandler) Record(c *fiber.Ctx) error {
 	deviceID := c.Get("X-Device-Id")
 
 	if err := h.usecase.Execute(
-		c.UserContext(),
+		c.Context(),
 		req.AnimeID,
 		req.Episode,
 		deviceID,

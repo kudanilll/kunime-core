@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"cloud.google.com/go/firestore"
-	firebase "firebase.google.com/go"
+	firebase "firebase.google.com/go/v4"
 )
 
 func NewClient(ctx context.Context, app *firebase.App) (*firestore.Client, error) {
