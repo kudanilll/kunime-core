@@ -1,7 +1,9 @@
 .git
+.github
 .gitignore
 Dockerfile
 README.md
 LICENSE
 .env
+.env.*
 firebase-service-account.json
